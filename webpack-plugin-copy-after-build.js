@@ -1,17 +1,21 @@
 const fs = require('fs');
 
-const CopyAfterBuild = function(options) {
-  this.options = options;
-}
-CopyAfterBuild.prototype.apply = function(compiler) {
-  const options = this.options;
-  compiler.plugin('after-emit', (compilation, callback) => {
-    for (let i in options) {
-      console.log('CopyAfterBuild: copying ', options[i].src, 'to', options[i].dest);
-      fs.createReadStream(options[i].src).pipe(fs.createWriteStream(options[i].dest));
-    }
-    callback();
-  });
+class CopyAfterBuildPlugin {
+  constructor (options = []) {
+    this.options = options;
+  }
+
+  apply (compiler) {
+    compiler.hooks.afterEmit.tap(
+      'CopyAfterBuildPlugin',
+      (stats) => {
+        for (let file of this.options) {
+          console.log('CopyAfterBuildPlugin: copying ', file.src, 'to', file.dest);
+          fs.createReadStream(file.src).pipe(fs.createWriteStream(file.dest));
+        }
+      }
+    );
+  }
 }
 
-module.exports = CopyAfterBuild;
+module.exports = CopyAfterBuildPlugin;
